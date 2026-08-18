@@ -1,0 +1,24 @@
+════════════════════════════════════════════════════════════
+  DeepSORVF Dual-Model Detection Log — clip-10
+════════════════════════════════════════════════════════════
+  Session start  : 2026-06-01 11:34:18
+  Duration       : 0:00:01
+  Detection frames logged: 0
+
+── YOLOX (vessels → tracking + AIS fusion) ─────────────
+  Total detections : 0
+  Avg per frame    : 0.00
+  Classes detected :
+
+── KOLOMVERSE (maritime objects → display only) ─────────
+  Total detections : 0
+  Kept (shown)     : 0
+  Suppressed by YOLOX overlap: 0
+  Avg kept per frame: 0.00
+  Classes detected :
+      (none — no maritime objects detected in this video)
+      → Try a video with kayaks, zodiacs, buoys, or sailboats
+        to trigger KOLOMVERSE detections.
+
+  CSV log : ./result/video\clip-10_detections_log.csv
+════════════════════════════════════════════════════════════

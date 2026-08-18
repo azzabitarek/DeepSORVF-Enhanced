@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────────────────────────────
+# pipeline_config.yaml — Pipeline parameters
+# ──────────────────────────────────────────────────────────────────────
+
+# ── AIS processing ──────────────────────────────────────────────────
+ais:
+  max_distance_m: 7408           # 4 * 1852 metres (4 nm)
+  max_history_minutes: 2
+  kalman_noise: [0.5, 0.5, 2.0, 2.0]
+  kalman_measurement_noise: [8.0, 8.0]
+
+# ── Fusion ──────────────────────────────────────────────────────────
+fusion:
+  binding_threshold: 1           # consecutive matches before lock
+  forgetting_threshold: 15       # seconds before unbound pair expires
+  max_dtw_angle_rad: 2.618       # 5/6 * pi — reject pairs >150°
+  dtw_compression: true          # reduce trajectory halves for speed
+
+# ── Anti-occlusion ──────────────────────────────────────────────────
+anti_occlusion:
+  max_age_seconds: 4             # drop ghost predictions after N seconds
+  iou_overlap_threshold: 0.4     # IoU to consider boxes overlapping
+  large_overlap_ratio: 0.7       # ratio for "large overlap" detection
+
+# ── Wake detection ──────────────────────────────────────────────────
+wake:
+  max_corners: 20
+  quality_level: 0.2
+  min_distance: 5
+  block_size: 7
+  lk_win_size: [15, 15]
+  lk_max_level: 2
+
+# ── Image preprocessing ────────────────────────────────────────────
+preprocessing:
+  clahe_clip_limit: 2.5
+  clahe_tile_size: [8, 8]
+  night_brightness_threshold: 80
+  fog_sharpness_threshold: 80
+  fog_brightness_threshold: 100
+
+# ── Confidence thresholds (weather-adaptive) ────────────────────────
+confidence:
+  yolox_clear: 0.50
+  yolox_rain: 0.35
+  yolox_fog: 0.30
+  yolov8_default: 0.30
+  shore_line_margin: 60
+  building_margin: 70
+  wind_farm_min_conf: 0.55
+  wind_farm_aspect_ratio: 1.5
+
+# ── Minimap / radar ────────────────────────────────────────────────
+minimap:
+  map_size: 700
+  cpa_warn_distance_m: 400
+  cpa_warn_time_s: 120
+  trail_length: 50

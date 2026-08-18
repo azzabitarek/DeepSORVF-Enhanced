@@ -1,0 +1,5 @@
+C:\Users\alach\OneDrive\Desktop\modele_1\new\VOCdevkit_val/VOC2007/JPEGImages/113.png
+C:\Users\alach\OneDrive\Desktop\modele_1\new\VOCdevkit_val/VOC2007/JPEGImages/116.png
+C:\Users\alach\OneDrive\Desktop\modele_1\new\VOCdevkit_val/VOC2007/JPEGImages/131.png
+C:\Users\alach\OneDrive\Desktop\modele_1\new\VOCdevkit_val/VOC2007/JPEGImages/157.png
+C:\Users\alach\OneDrive\Desktop\modele_1\new\VOCdevkit_val/VOC2007/JPEGImages/179.png

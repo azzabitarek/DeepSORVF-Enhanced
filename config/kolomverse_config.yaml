@@ -1,0 +1,37 @@
+# ──────────────────────────────────────────────────────────────────────
+# kolomverse_config.yaml — YOLOv8 / KOLOMVERSE training parameters
+# ──────────────────────────────────────────────────────────────────────
+
+# ── Model ───────────────────────────────────────────────────────────
+model:
+  base_model: "yolov8s.pt"     # ultralytics base (s/m/l/x)
+  custom_weights: "./best.pt"
+  imgsz: 640
+
+# ── Training ────────────────────────────────────────────────────────
+training:
+  epochs: 100
+  batch: 8
+  lr0: 0.001
+  optimizer: "AdamW"
+  augment: true
+  mosaic: 1.0
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  flipud: 0.0
+  fliplr: 0.5
+  device: 0                    # GPU index
+
+# ── Dataset ─────────────────────────────────────────────────────────
+dataset:
+  name: "SeaDronesSee"
+  yaml: "./config/seadronessee.yaml"
+  root: "./data/processed/seaDronesSee"
+
+# ── Inference (Colab) ──────────────────────────────────────────────
+inference:
+  conf: 0.30
+  iou: 0.45
+  imgsz: 640
+  device: "cuda:0"

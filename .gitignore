@@ -1,0 +1,93 @@
+# ──────────────────────────────────────────────────────────────────────
+# .gitignore — DeepSORVF Modular
+# ──────────────────────────────────────────────────────────────────────
+
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+.eggs/
+
+# ── Virtual environments ────────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+
+# ── IDE ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ── Jupyter ─────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── OS ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Large files (models, videos, data) ─────────────────────────────
+# Model weights — track with DVC or Git LFS, not raw git
+*.pth
+*.pt
+*.onnx
+*.engine
+*.trt
+best.pt
+
+# Video files
+*.avi
+*.mp4
+*.mkv
+*.mov
+
+# AIS data CSVs (too many, regenerable)
+**/*.csv
+
+# Clip/Video video files
+clip-*/*.avi
+clip-*/*.mp4
+Video-*/*.avi
+Video-*/*.mp4
+
+# GT videos (large mp4 files in gt/)
+**/gt/*.mp4
+
+# Cache (regenerable)
+data/frames_cache/*.pkl
+data/frames_cache/*.json
+
+# Logs
+logs/
+*.log
+
+# ── Results (keep structure, ignore content) ────────────────────────
+data/results/**/video/
+data/results/**/*_radar.mp4
+result/video/*.csv
+result/video/*.txt
+
+# ── Bad filenames ───────────────────────────────────────────────────
+utils/import pandas as pd.py
+
+# ── Temporary ───────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
+
+# ── Google Colab ────────────────────────────────────────────────────
+content/
+sample_data/

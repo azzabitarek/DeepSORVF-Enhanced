@@ -1,0 +1,41 @@
+# ──────────────────────────────────────────────────────────────────────
+# yolox_config.yaml — YOLOX training parameters
+# ──────────────────────────────────────────────────────────────────────
+
+# ── Model ───────────────────────────────────────────────────────────
+model:
+  phi: "s"                     # s, m, l, x
+  input_shape: [608, 608]
+  classes_path: "./detection_yolox/model_data/ship_classes.txt"
+  pretrained_weights: "./detection_yolox/model_data/YOLOX-final.pth"
+
+# ── Training ────────────────────────────────────────────────────────
+training:
+  cuda: true
+  freeze_train: true
+  
+  # Frozen phase
+  init_epoch: 0
+  freeze_epoch: 0
+  freeze_batch_size: 2
+  freeze_lr: 0.001
+  
+  # Unfrozen phase
+  unfreeze_epoch: 200
+  unfreeze_batch_size: 2
+  unfreeze_lr: 0.0001
+  
+  # Augmentation
+  mosaic: true
+  cosine_scheduler: false
+  num_workers: 0
+
+# ── Dataset splits ──────────────────────────────────────────────────
+splits:
+  trainval_percent: 0.95
+  train_percent: 0.95
+
+# ── Output ──────────────────────────────────────────────────────────
+output:
+  logs_dir: "./checkpoints/yolox_logs"
+  best_model: "./checkpoints/yolox_smd_final.pth"

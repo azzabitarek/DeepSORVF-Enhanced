@@ -1,0 +1,25 @@
+════════════════════════════════════════════════════════════
+  DeepSORVF Dual-Model Detection Log — Video-32
+════════════════════════════════════════════════════════════
+  Session start  : 2026-06-01 11:31:35
+  Duration       : 0:00:15
+  Detection frames logged: 9
+
+── YOLOX (vessels → tracking + AIS fusion) ─────────────
+  Total detections : 9
+  Avg per frame    : 1.00
+  Classes detected :
+      vessel                    9
+
+── KOLOMVERSE (maritime objects → display only) ─────────
+  Total detections : 46
+  Kept (shown)     : 19
+  Suppressed by YOLOX overlap: 27
+  Avg kept per frame: 2.11
+  Classes detected :
+      wind farm                 27
+      lighthouse                16
+      ship                      3
+
+  CSV log : ./result/video\Video-32_detections_log.csv
+════════════════════════════════════════════════════════════
