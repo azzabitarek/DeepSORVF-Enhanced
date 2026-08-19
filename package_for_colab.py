@@ -63,6 +63,8 @@ SKIP_FILES = {
 
 def should_skip(path: str) -> bool:
     """Check if a file should be excluded from the package."""
+    # Normalize to forward slashes for cross-platform matching
+    path = path.replace("\\", "/")
     # Skip exact files
     if path in SKIP_FILES:
         return True
@@ -90,7 +92,7 @@ def make_package():
                 dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
                 for fname in files:
                     fpath = os.path.join(root, fname)
-                    arcname = os.path.relpath(fpath, PROJECT_ROOT)
+                    arcname = os.path.relpath(fpath, PROJECT_ROOT).replace("\\", "/")
                     if should_skip(arcname):
                         continue
                     zf.write(fpath, arcname)
