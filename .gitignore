@@ -79,6 +79,7 @@ data/results/**/video/
 data/results/**/*_radar.mp4
 result/video/*.csv
 result/video/*.txt
+ablation_results/
 
 # ── Bad filenames ───────────────────────────────────────────────────
 utils/import pandas as pd.py

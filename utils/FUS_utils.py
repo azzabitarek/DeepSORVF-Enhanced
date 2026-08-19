@@ -14,6 +14,25 @@ def __reduce_by_half(x):
     return [(x[i] + x[1+i]) / 2 for i in range(0, len(x) - len(x) % 2, 2)]
 
 
+def _greedy_assignment(cost_matrix):
+    """
+    Greedy assignment for ablation 'no Hungarian'.
+    Sort all (i,j) pairs by cost ascending, assign greedily.
+    """
+    n_rows, n_cols = cost_matrix.shape
+    pairs = [(cost_matrix[i, j], i, j) for i in range(n_rows) for j in range(n_cols)]
+    pairs.sort(key=lambda x: x[0])
+    used_rows, used_cols = set(), set()
+    row_ind, col_ind = [], []
+    for cost, i, j in pairs:
+        if i not in used_rows and j not in used_cols:
+            row_ind.append(i)
+            col_ind.append(j)
+            used_rows.add(i)
+            used_cols.add(j)
+    return np.array(row_ind), np.array(col_ind)
+
+
 def heading_penalty(ais_heading_deg, vis_traj, ais_traj):
     """
     Mild penalty [1.0 .. 1.5] based only on trajectory direction agreement.
@@ -68,10 +87,10 @@ def angle(v1, v2):
             included_angle = math.pi * 2 - included_angle
     return included_angle
 
-def DTW_fast(traj0, traj1):
+def DTW_fast(traj0, traj1, use_angle_penalty=True):
     # 1. Compute the included angle between the two trajectories
     if len(traj0) > 1 and len(traj1) > 1:
-        theta = angle(traj0, traj1)
+        theta = angle(traj0, traj1) if use_angle_penalty else 0.0
         traj0 = __reduce_by_half(traj0)
         traj1 = __reduce_by_half(traj1)
     else:
@@ -122,16 +141,25 @@ def traj_group(df_data, df_dataCur, kind):
     return trajData_list, trajLabel_list, trajInf_list
 
 class FUSPRO(object):
-    def __init__(self, max_dis, im_shape, t):
+    def __init__(self, max_dis, im_shape, t,
+                 use_dtw=True, use_angle_penalty=True,
+                 use_binding=True, use_hungarian=True):
         # Maximum matching distance (pixels)
         self.max_dis  = max_dis
         self.im_shape = im_shape
         # Number of consecutive matches required before a pair is locked (binding threshold)
-        self.bin_num  = 1
+        self.bin_num  = 1 if use_binding else float('inf')
         # Number of seconds a locked pair is kept alive without a new match (forgetting threshold)
         self.fog_num  = 15
         # Display duration per frame (ms)
         self.t        = t
+
+        # --- Ablation flags ---
+        self.use_dtw           = use_dtw
+        self.use_angle_penalty = use_angle_penalty
+        self.use_hungarian     = use_hungarian
+        # Ablation log path (set by ablation runner to enable CSV logging)
+        self._ablation_log_path = None
 
         # Data store 1: match records for the current timestamp
         self.mat_cur  = pd.DataFrame(pd.DataFrame(columns=['ID/mmsi', 'timestamp', 'match']))
@@ -176,7 +204,7 @@ class FUSPRO(object):
 
                 # Case 1: No existing binding — compute FastDTW + heading penalty
                 if int(cur_mmsi) not in bin_MMSI and int(cur_ID) not in bin_ID:
-                    theta = angle(VIS_list[i], AIS_list[j])
+                    theta = angle(VIS_list[i], AIS_list[j]) if self.use_angle_penalty else 0.0
                     # Compute pixel-space distance between the latest positions
                     x_VIS = VIS_list[i][-1][0]
                     y_VIS = VIS_list[i][-1][1]
@@ -185,12 +213,20 @@ class FUSPRO(object):
                     dis   = ((x_VIS - x_AIS) ** 2 + (y_VIS - y_AIS) ** 2) ** 0.5
                     # Only compute DTW if within distance and angle limits
                     if dis < self.max_dis and theta < math.pi * (5/6):
-                        try:
-                            ais_heading = float(AInf_list[j][-1][5])  # column index 5 = heading
-                        except:
-                            ais_heading = 0.0
-                        hp = heading_penalty(ais_heading, VIS_list[i], AIS_list[j])
-                        matrix_S[i][j] = DTW_fast(VIS_list[i], AIS_list[j]) * hp
+                        if self.use_dtw:
+                            cost = DTW_fast(VIS_list[i], AIS_list[j],
+                                             use_angle_penalty=self.use_angle_penalty)
+                        else:
+                            cost = dis
+                        if self.use_angle_penalty:
+                            try:
+                                ais_heading = float(AInf_list[j][-1][5])
+                            except:
+                                ais_heading = 0.0
+                            hp = heading_penalty(ais_heading, VIS_list[i], AIS_list[j])
+                        else:
+                            hp = 1.0
+                        matrix_S[i][j] = cost * hp
                     else:
                         matrix_S[i][j] = 1000000000
 
@@ -288,6 +324,27 @@ class FUSPRO(object):
                                            'timestamp': int(inf['timestamp']),
                                            'match': int(inf['match'])}])], ignore_index=True)
 
+        # --- Ablation logging (optional) ---
+        # Logs ALL matches from mat_cur (not just locked from bin_cur),
+        # so entries are written even when FUS is freshly reinitialized.
+        if self._ablation_log_path:
+            import csv
+            write_header = not os.path.exists(self._ablation_log_path)
+            with open(self._ablation_log_path, 'a', newline='') as f:
+                writer = csv.writer(f)
+                if write_header:
+                    writer.writerow(['timestamp', 'ID', 'mmsi', 'match_count', 'is_new_lock'])
+                for _, inf in mat_cur.iterrows():
+                    ID_mmsi = inf['ID/mmsi']
+                    ID_val, mmsi_val = [int(x) for x in ID_mmsi.split('/')]
+                    writer.writerow([
+                        int(inf['timestamp']),
+                        ID_val,
+                        mmsi_val,
+                        int(inf['match']),
+                        bool(inf['match'] == self.bin_num + 1)
+                    ])
+
         return mat_list, mat_cur, bin_cur
 
     def traj_match(self, AIS_list, AIS_MMSIlist, VIS_list, VIS_IDlist, AInf_list, VInf_list, timestamp):
@@ -297,8 +354,11 @@ class FUSPRO(object):
         # 2. Build similarity cost matrix
         matrix_S = self.cal_similarity(AIS_list, AIS_MMSIlist, VIS_list, VIS_IDlist, bin_las, AInf_list)
 
-        # 3. Optimal assignment via Hungarian algorithm
-        row_ind, col_ind = linear_assignment(matrix_S)
+        # 3. Optimal assignment via Hungarian algorithm (or greedy for ablation)
+        if self.use_hungarian:
+            row_ind, col_ind = linear_assignment(matrix_S)
+        else:
+            row_ind, col_ind = _greedy_assignment(matrix_S)
 
         # 4. Filter out assignments that exceed distance / angle thresholds
         matches = self.data_filter(row_ind, col_ind, VIS_list, AIS_list)

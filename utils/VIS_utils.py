@@ -147,6 +147,34 @@ def _detect_shoreline(frame):
     return max(0, best_y - 60)  # ← 60px au lieu de 30
 
 
+def _is_static_structure(mb, shore_y, BUILDING_MARGIN=70):
+    """
+    Filter out static structures (buildings, cranes, wind farms) from
+    KOLOMVERSE maritime detections. Returns True if the detection should
+    be suppressed (i.e. it IS a static structure).
+    """
+    cy = (mb[1] + mb[3]) / 2
+    cls = mb[4]
+    conf = mb[5]
+
+    # Wind farm specific filter
+    if cls == 'wind farm':
+        if conf < 0.55:
+            return True
+        if cy < shore_y - 20:
+            return True
+        width = mb[2] - mb[0]
+        height = mb[3] - mb[1]
+        if height > 0 and (width / height) > 1.5:
+            return True
+
+    # Reject any object above the shoreline (on land)
+    if cy < shore_y - BUILDING_MARGIN:
+        return True
+
+    return False
+
+
 def preprocess_frame(frame):
     """
     1. CLAHE on L channel when brightness < 80 (night / dusk)
@@ -677,7 +705,8 @@ class VISPRO(object):
         return bboxes_anti_occ
 
         
-    def feedCap(self, image, timestamp, AIS_vis, bind_inf, ais_enabled=True):
+    def feedCap(self, image, timestamp, AIS_vis, bind_inf, ais_enabled=True,
+                use_ensemble=True, use_static_filter=True):
         # Mise à jour de l'état AIS enabled à chaque frame
         self.ais_enabled = ais_enabled
         
@@ -695,63 +724,39 @@ class VISPRO(object):
             # Kept boxes expire after 1000 ms.
             self.maritime_bboxes_suppressed = []
             expire_at = timestamp + self.t  # one frame duration
-            if _yolov8 is not None:
+
+            if use_ensemble and _yolov8 is not None:
                 try:
                     raw_maritime = _yolov8.detect_image(image)
 
-                    # ── Filtre ligne de rive — solution définitive ────────────
-                    # Détecte automatiquement la transition bâtiments→eau par
-                    # gradient vertical maximal. Fonctionne indépendamment de :
-                    # - la position horizontale des structures (milieu, bords)
-                    # - la forme des objets (carrés, allongés)
-                    # - la confiance de détection
-                    # Navires accostés : dans l'eau → en-dessous de la rive ✅
-                    # Bâtiments/grues  : sur la rive → au-dessus ❌
                     shore_y = _detect_shoreline(image)
-                    BUILDING_MARGIN = 70  # Plus strict
+                    BUILDING_MARGIN = 70
 
                     new_timed = []
                     for mb in raw_maritime:
-                        cy = (mb[1] + mb[3]) / 2
-                        cls = mb[4]
-                        conf = mb[5]
-                        
-                        # FILTRE SPÉCIFIQUE POUR WIND FARM
-                        if cls == 'wind farm':
-                            # Seuil plus haut pour wind farm (rejeter les détections faibles)
-                            if conf < 0.55:
-                                self.maritime_bboxes_suppressed.append(mb)
-                                continue
-                            # Trop près de la rive = bâtiment, pas éolienne
-                            if cy < shore_y - 20:
-                                self.maritime_bboxes_suppressed.append(mb)
-                                continue
-                            # Vérifier le ratio largeur/hauteur (les bâtiments sont plus larges)
-                            width = mb[2] - mb[0]
-                            height = mb[3] - mb[1]
-                            if height > 0 and (width / height) > 1.5:  # Plus large que haut = bâtiment
+                        if use_static_filter:
+                            if _is_static_structure(mb, shore_y, BUILDING_MARGIN):
                                 self.maritime_bboxes_suppressed.append(mb)
                                 continue
                         
-                        # Rejeter tout objet trop haut dans l'image (au-dessus de la rive)
-                        if cy < shore_y - BUILDING_MARGIN:
-                            self.maritime_bboxes_suppressed.append(mb)
-                            continue
-                        
-                        # NMS avec YOLOX (inchangé)
+                        # NMS with YOLOX (inline IoU check)
                         if any(self._iou(mb[:4], vb[:4]) > 0.4 for vb in bboxes):
                             self.maritime_bboxes_suppressed.append(mb)
                             continue
                         
                         new_timed.append((*mb, expire_at))
 
-                    # Merge: keep unexpired old boxes + all new ones
                     self._maritime_bboxes_timed = [
                         b for b in self._maritime_bboxes_timed
                         if b[6] > timestamp
                     ] + new_timed
                 except Exception:
                     pass  # YOLOv8 failure never blocks vessel tracking
+            else:
+                # use_ensemble=False or _yolov8 not loaded: no maritime detections
+                self._maritime_bboxes_timed = [
+                    b for b in self._maritime_bboxes_timed if b[6] > timestamp
+                ]
             
             # Expire old boxes even if YOLOv8 didn't run this frame
             self._maritime_bboxes_timed = [
