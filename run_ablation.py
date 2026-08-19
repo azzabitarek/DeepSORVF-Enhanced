@@ -27,7 +27,8 @@ def run_pipeline(clip_name, result_dir,
                  ais_enabled=True, anti=1,
                  use_dtw=True, use_angle_penalty=True,
                  use_binding=True, use_hungarian=True,
-                 max_frames=None, config_name='default'):
+                 max_frames=None, config_name='default',
+                 enable_reinit_workaround=None):
     """
     Run the DeepSORVF pipeline headless on a single clip.
 
@@ -57,6 +58,17 @@ def run_pipeline(clip_name, result_dir,
         Maximum frames to process (None = all)
     config_name : str
         Name of this configuration (for logging)
+    enable_reinit_workaround : bool or None
+        Periodically recreate AIS/VIS/FUS/DeepSORT to work around a
+        Windows-specific native crash (STATUS_STACK_BUFFER_OVERRUN) seen
+        during local development. This wipes ALL cross-second state:
+        FUSPRO match/binding counters, DeepSORT track IDs and ReID
+        features, and VISPRO's OAR history — defeating the very
+        mechanisms this ablation study is meant to measure.
+        If None (default), auto-disabled on non-Windows platforms
+        (Colab/Linux), since the crash is Windows-specific.
+        Set explicitly to True only if you hit the same native crash on
+        your current platform.
 
     Returns
     -------
@@ -70,6 +82,17 @@ def run_pipeline(clip_name, result_dir,
 
     result_dir = Path(result_dir)
     result_dir.mkdir(parents=True, exist_ok=True)
+
+    # Auto-disable the Windows-only crash workaround on non-Windows platforms.
+    # Colab/Linux does not exhibit the STATUS_STACK_BUFFER_OVERRUN crash this
+    # workaround targets, and keeping it enabled silently discards all
+    # cross-second state in FUSPRO, DeepSORT, and VISPRO — invalidating any
+    # ablation metric that depends on temporal continuity.
+    if enable_reinit_workaround is None:
+        enable_reinit_workaround = sys.platform.startswith('win')
+    if not enable_reinit_workaround:
+        print(f"  [{config_name}] Reinit workaround disabled "
+              f"(platform={sys.platform}) — state persists for the full clip.")
 
     # Read clip data
     clip_path = str(PROJECT_ROOT / 'data' / 'clips' / clip_name) + "/"
@@ -135,7 +158,7 @@ def run_pipeline(clip_name, result_dir,
             n_init=ds_cfg.DEEPSORT.N_INIT,
             nn_budget=ds_cfg.DEEPSORT.NN_BUDGET,
             use_cuda=torch.cuda.is_available(),
-            use_reid=False
+            use_reid=True
         )
         ais_file_fresh, _, _ = ais_initial(ais_path, initial_time)
         AIS = AISPRO(ais_path, ais_file_fresh, im_shape, t)
@@ -164,10 +187,12 @@ def run_pipeline(clip_name, result_dir,
             break
 
         # Reinit all processors periodically to prevent native crash
-        frames_since_reinit += 1
-        if frames_since_reinit >= REINIT_FRAMES:
-            _reinit_processors()
-            frames_since_reinit = 0
+        # (Windows-only — see enable_reinit_workaround docstring above).
+        if enable_reinit_workaround:
+            frames_since_reinit += 1
+            if frames_since_reinit >= REINIT_FRAMES:
+                _reinit_processors()
+                frames_since_reinit = 0
 
         start = time.time()
         Time, timestamp, Time_name = update_time(Time, t)

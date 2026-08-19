@@ -53,7 +53,7 @@ deepsort = DeepSort(cfg.DEEPSORT.REID_CKPT,
                     max_dist=cfg.DEEPSORT.MAX_DIST, min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
                     nms_max_overlap=cfg.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
                     max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT, nn_budget=cfg.DEEPSORT.NN_BUDGET,
-                    use_cuda=torch.cuda.is_available(), use_reid=False)
+                    use_cuda=torch.cuda.is_available(), use_reid=True)
 
 def _ensemble_nms(boxes_ship, boxes_maritime, iou_thresh=0.5):
     """

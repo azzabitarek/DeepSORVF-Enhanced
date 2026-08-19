@@ -75,7 +75,7 @@ class InferenceRunner:
             n_init=cfg.DEEPSORT.N_INIT,
             nn_budget=cfg.DEEPSORT.NN_BUDGET,
             use_cuda=(self.device != "cpu"),
-            use_reid=False
+            use_reid=True
         )
 
         self._initialized = True

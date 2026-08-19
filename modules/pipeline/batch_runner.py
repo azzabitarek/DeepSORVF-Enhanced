@@ -165,7 +165,7 @@ class BatchRunner:
             n_init=cfg.DEEPSORT.N_INIT,
             nn_budget=cfg.DEEPSORT.NN_BUDGET,
             use_cuda=torch.cuda.is_available(),
-            use_reid=False
+            use_reid=True
         )
 
         batch_stats = {
