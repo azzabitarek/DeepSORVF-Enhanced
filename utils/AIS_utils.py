@@ -207,7 +207,7 @@ def data_pre(ais, timestamp):
         geo_d = pyproj.Geod(ellps="WGS84")
 
         # Compute distance travelled since the last fix
-        distance = ais['speed'] * ((timestamp - ais['timestamp']) / 3600) * 1852
+        distance = ais['speed'] * ((timestamp - int(ais['timestamp'])) / 3600) * 1852
         ais['timestamp'] = timestamp
 
         # Compute new lon/lat using the vessel's course and distance
@@ -218,7 +218,7 @@ def data_pre(ais, timestamp):
 def data_pred(AIS_cur, AIS_read, AIS_las, timestamp):
 
     for index, ais in AIS_read.iterrows():
-        ais['timestamp'] = round(ais['timestamp'] / 1000)
+        ais['timestamp'] = round(int(ais['timestamp']) / 1000)
         # 1. Record exists at the current timestamp — use as-is
         if ais['timestamp'] == int(timestamp // 1000):
             AIS_cur = pd.concat([AIS_cur, ais.to_frame().T], ignore_index=True)
