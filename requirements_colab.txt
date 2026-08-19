@@ -1,0 +1,14 @@
+# DeepSORVF — Colab dependencies
+# Install: pip install -r requirements_colab.txt
+ultralytics==8.4.121
+filterpy
+lap
+easydict
+geopy
+pyproj
+fastdtw
+loguru
+scikit-image
+pandas
+numpy
+opencv-python-headless

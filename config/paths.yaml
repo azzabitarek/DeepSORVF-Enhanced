@@ -34,11 +34,11 @@ processed:
 
 # ── Pre-trained checkpoints ──────────────────────────────────────────
 checkpoints:
-  yolox_pretrained: "./detection_yolox/model_data/YOLOX-final.pth"
+  yolox_pretrained: "./weights/YOLOX-final.pth"
   yolox_custom: "./checkpoints/yolox_smd_final.pth"
-  kolomverse_pretrained: "./best.pt"
+  kolomverse_pretrained: "./weights/best.pt"
   kolomverse_custom: "./checkpoints/kolomverse_final.pt"
-  deepsort_reid: "./deep_sort/deep_sort/deep/checkpoint/ckpt.t7"
+  deepsort_reid: "./weights/ckpt.t7"
 
 # ── Results ──────────────────────────────────────────────────────────
 results:

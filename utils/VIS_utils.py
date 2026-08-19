@@ -25,7 +25,7 @@ from detection_yolov8.yolov8_detector import YOLOv8Detector, ULTRALYTICS_OK
 _yolov8 = None
 # Always resolve best.pt relative to this file's directory (project root)
 _YOLOV8_WEIGHTS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               '..', 'best.pt')
+                               '..', 'weights', 'best.pt')
 
 def _load_yolov8():
     global _yolov8

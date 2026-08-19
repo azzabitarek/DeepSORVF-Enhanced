@@ -48,6 +48,11 @@ desktop.ini
 *.trt
 best.pt
 
+# BUT: track weights/ directory explicitly
+!weights/*.pt
+!weights/*.pth
+!weights/*.t7
+
 # Video files
 *.avi
 *.mp4

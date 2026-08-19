@@ -21,7 +21,7 @@ class YOLO(object):
         #   model_path指向logs文件夹下的权值文件，classes_path指向model_data下的txt
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         #--------------------------------------------------------------------------#
-        "model_path" : 'detection_yolox/model_data/YOLOX-final.pth',
+        "model_path" : 'weights/YOLOX-final.pth',
         "classes_path"      : 'detection_yolox/model_data/ship_classes.txt',
         #---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
