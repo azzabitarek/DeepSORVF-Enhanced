@@ -113,7 +113,8 @@ def run_pipeline(clip_name, result_dir,
     detection_seconds = 0
     start_all = time.time()
 
-    # DeepSORT reinit support (prevents Windows native crash from state accumulation)
+    # DeepSORT reinit support (prevents STATUS_STACK_BUFFER_OVERRUN native crash
+    # from state accumulation on Windows).
     import torch
     import utils.VIS_utils as vis_module
     from deep_sort.utils.parser import get_config as ds_get_config
@@ -121,7 +122,9 @@ def run_pipeline(clip_name, result_dir,
     ds_cfg = ds_get_config()
     ds_cfg.merge_from_file(str(PROJECT_ROOT / "deep_sort/configs/deep_sort.yaml"))
 
-    def _reinit_deepsort():
+    def _reinit_processors():
+        """Recreate deepsort + AIS/VIS/FUS to prevent Windows native crash."""
+        nonlocal AIS, VIS, FUS
         vis_module.deepsort = DS_DeepSort(
             str(PROJECT_ROOT / ds_cfg.DEEPSORT.REID_CKPT),
             max_dist=ds_cfg.DEEPSORT.MAX_DIST,
@@ -134,11 +137,6 @@ def run_pipeline(clip_name, result_dir,
             use_cuda=torch.cuda.is_available(),
             use_reid=False
         )
-
-    def _reinit_processors():
-        """Recreate AIS/VIS/FUS to prevent Windows native crash from state accumulation."""
-        nonlocal AIS, VIS, FUS
-        _reinit_deepsort()
         ais_file_fresh, _, _ = ais_initial(ais_path, initial_time)
         AIS = AISPRO(ais_path, ais_file_fresh, im_shape, t)
         VIS = VISPRO(anti=anti, val=0, t=t, ais_enabled=ais_enabled)
@@ -149,12 +147,11 @@ def run_pipeline(clip_name, result_dir,
                      use_hungarian=use_hungarian)
         FUS._ablation_log_path = str(ablation_log_path)
 
-    _reinit_processors()
-
-    # Reinitialize every BATCH_SIZE frames to prevent Windows native crash
-    # from state accumulation, while allowing deepsort to confirm tracks
-    # within a detection second (n_init=3 needs ~25 frames).
-    BATCH_SIZE = 20
+    # Reinit every REINIT_FRAMES to prevent native crash.
+    # At 25 frames = 1 detection second (fps=25), deepsort sees exactly 1
+    # detection second before reset. With tentative tracks patch, vis_cur
+    # still has data even without n_init confirmation.
+    REINIT_FRAMES = 25
     frames_since_reinit = 0
 
     while True:
@@ -166,11 +163,9 @@ def run_pipeline(clip_name, result_dir,
         if max_frames and frame_idx >= max_frames:
             break
 
-        # Reinitialize all processors every BATCH_SIZE frames
-        # (must be < 25 to reset before crash, but allows track state
-        # to survive within a detection second)
+        # Reinit all processors periodically to prevent native crash
         frames_since_reinit += 1
-        if frames_since_reinit >= BATCH_SIZE:
+        if frames_since_reinit >= REINIT_FRAMES:
             _reinit_processors()
             frames_since_reinit = 0
 
@@ -185,7 +180,10 @@ def run_pipeline(clip_name, result_dir,
             use_ensemble=use_ensemble,
             use_static_filter=use_static_filter
         )
-        Fus_tra, bin_inf = FUS.fusion(AIS_vis, AIS_cur, Vis_tra, Vis_cur, timestamp)
+        if ais_enabled:
+            Fus_tra, bin_inf = FUS.fusion(AIS_vis, AIS_cur, Vis_tra, Vis_cur, timestamp)
+        else:
+            Fus_tra = pd.DataFrame()
 
         elapsed = time.time() - start
         total_time += elapsed

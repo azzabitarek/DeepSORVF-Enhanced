@@ -363,7 +363,7 @@ class FUSPRO(object):
         # 4. Filter out assignments that exceed distance / angle thresholds
         matches = self.data_filter(row_ind, col_ind, VIS_list, AIS_list)
 
-        matric = pd.DataFrame(matrix_S, columns=AIS_MMSIlist, index=VIS_IDlist, dtype=int)
+        matric = pd.DataFrame(matrix_S, columns=AIS_MMSIlist, index=VIS_IDlist)
 
         # 5. Save match and binding data
         mat_list, mat_cur, bin_cur = self.save_data(mat_cur, bin_cur, mat_las, bin_las,

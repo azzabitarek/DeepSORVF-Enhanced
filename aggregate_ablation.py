@@ -148,20 +148,58 @@ def aggregate_run(run_dir, sequences, configs):
 
     for seq in sequences:
         ais_dir = PROJECT_ROOT / seq / 'ais'
+        expected_mmsis = load_expected_mmsis(ais_dir)
 
         for config in configs:
+            config_dir = run_dir / seq / config
+
             # Find the ablation log file
-            log_pattern = str(run_dir / seq / config / f'*_ablation_log.csv')
+            log_pattern = str(config_dir / f'*_ablation_log.csv')
             log_files = glob.glob(log_pattern)
 
-            if not log_files:
-                continue
+            log_csv = log_files[0] if log_files else None
 
-            log_csv = log_files[0]
-            metrics = compute_metrics(log_csv, ais_dir)
+            # Read detection/tracking/fusion counts from metric files
+            metric_dir = config_dir / 'metric'
+            det_count = 0
+            trk_count = 0
+            fus_count = 0
+
+            det_file = metric_dir / f'{seq}_detection.txt'
+            trk_file = metric_dir / f'{seq}_tracking.txt'
+            fus_file = metric_dir / f'{seq}_fusion.txt'
+
+            if det_file.exists():
+                with open(det_file) as f:
+                    det_count = sum(1 for _ in f)
+            if trk_file.exists():
+                with open(trk_file) as f:
+                    trk_count = sum(1 for _ in f)
+            if fus_file.exists():
+                with open(fus_file) as f:
+                    fus_count = sum(1 for _ in f)
+
+            if log_csv:
+                metrics = compute_metrics(log_csv, ais_dir)
+            else:
+                metrics = {
+                    'fusion_rate': 0.0,
+                    'id_switches': 0,
+                    'avg_latency_s': None,
+                    'n_locked': 0,
+                    'n_expected': len(expected_mmsis),
+                }
+
+            # Compute detection-level fusion rate: fus_count / det_count
+            detection_fusion_rate = fus_count / max(det_count, 1)
+
             rows.append({
                 'sequence': seq,
                 'config': config,
+                'detection_count': det_count,
+                'tracking_count': trk_count,
+                'fusion_count': fus_count,
+                'detection_fusion_rate': round(detection_fusion_rate, 4),
                 **metrics
             })
 
@@ -178,14 +216,19 @@ def aggregate_run(run_dir, sequences, configs):
     per_sequence_df = pd.DataFrame(rows)
 
     if not per_sequence_df.empty:
-        summary_df = per_sequence_df.groupby('config').agg(
-            fusion_rate_mean=('fusion_rate', 'mean'),
-            fusion_rate_std=('fusion_rate', 'std'),
-            id_switches_mean=('id_switches', 'mean'),
-            id_switches_std=('id_switches', 'std'),
-            avg_latency_s_mean=('avg_latency_s', 'mean'),
-            avg_latency_s_std=('avg_latency_s', 'std'),
-        ).round(4)
+        agg_dict = {
+            'detection_count': ('detection_count', 'mean'),
+            'tracking_count': ('tracking_count', 'mean'),
+            'fusion_count': ('fusion_count', 'mean'),
+            'detection_fusion_rate': ('detection_fusion_rate', 'mean'),
+            'fusion_rate_mean': ('fusion_rate', 'mean'),
+            'fusion_rate_std': ('fusion_rate', 'std'),
+            'id_switches_mean': ('id_switches', 'mean'),
+            'id_switches_std': ('id_switches', 'std'),
+            'avg_latency_s_mean': ('avg_latency_s', 'mean'),
+            'avg_latency_s_std': ('avg_latency_s', 'std'),
+        }
+        summary_df = per_sequence_df.groupby('config').agg(**agg_dict).round(4)
     else:
         summary_df = pd.DataFrame()
 

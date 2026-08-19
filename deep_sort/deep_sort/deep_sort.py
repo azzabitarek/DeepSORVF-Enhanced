@@ -68,7 +68,7 @@ class DeepSort(object):
         # output bbox identities
         outputs = []
         for track in self.tracker.tracks:
-            if not track.is_confirmed() or track.time_since_update > 1:
+            if track.time_since_update > 1:
                 continue
             box = track.to_tlwh()
             lines = track.to_lines()
