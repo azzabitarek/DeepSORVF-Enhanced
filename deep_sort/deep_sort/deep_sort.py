@@ -12,12 +12,16 @@ __all__ = ['DeepSort'] # __all__ 提供了暴露接口用的”白名单“
 
 
 class DeepSort(object):
-    def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=2.0, max_iou_distance=0.7, max_age=500, n_init=3, nn_budget=100, use_cuda=True):
+    def __init__(self, model_path, max_dist=0.2, min_confidence=0.3, nms_max_overlap=2.0, max_iou_distance=0.7, max_age=500, n_init=3, nn_budget=100, use_cuda=True, use_reid=True):
         self.min_confidence = min_confidence # 检测结果置信度阈值 
         
         self.nms_max_overlap = nms_max_overlap # 非极大抑制阈值，设置为1代表不进行抑制
 
-        self.extractor = Extractor(model_path, use_cuda=use_cuda) # 用于提取一个batch图片对应的特征
+        self.use_reid = use_reid
+        if use_reid:
+            self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        else:
+            self.extractor = None
 
         max_cosine_distance = max_dist # 最大余弦距离，用于级联匹配，如果大于该阈值，则忽略
         nn_budget = 100 # 每个类别gallery最多的外观描述子的个数，如果超过，删除旧的
@@ -47,8 +51,8 @@ class DeepSort(object):
                             features = features_occ
                         else:
                             features = np.concatenate((features, features_occ), axis=0)
-            except:
-                embed()
+            except Exception:
+                pass
         # 筛选掉小于min_confidence的目标，并构造一个Detection对象构成的列表
         detections = [Detection(bbox_tlwh[i], conf, features[i]) for i,conf in enumerate(conf_all) if conf>self.min_confidence]
         # run on non-maximum supression
@@ -126,6 +130,11 @@ class DeepSort(object):
     
     # 获取抠图部分的特征
     def _get_features(self, bbox_xywh, ori_img):
+        n = len(bbox_xywh)
+        if n == 0:
+            return np.array([])
+        if not self.use_reid or self.extractor is None:
+            return np.zeros((n, 512), dtype=np.float32)
         im_crops = []
         for box in bbox_xywh:
             x1,y1,x2,y2 = self._xywh_to_xyxy(box)

@@ -54,20 +54,17 @@ def _cosine_distance(a, b, data_is_normalized=False):
         Returns a matrix of size len(a), len(b) such that eleement (i, j)
         contains the squared distance between `a[i]` and `b[j]`.
 
-    用于计算成对点之间的余弦距离
-    a ：NxM 矩阵，代表 N 个样本，每个样本 M 个数值 
-    b ：LxM 矩阵，代表 L 个样本，每个样本有 M 个数值 
-    返回的是 NxL 的矩阵，比如 c[i][j] 代表 a[i] 和 b[j] 之间的余弦距离
-    参考：
-    https://blog.csdn.net/u013749540/article/details/51813922
-    
-
     """
     if not data_is_normalized:
-        # np.linalg.norm 求向量的范式，默认是 L2 范式 
-        a = np.asarray(a) / np.linalg.norm(a, axis=1, keepdims=True)
-        b = np.asarray(b) / np.linalg.norm(b, axis=1, keepdims=True)
-    return 1. - np.dot(a, b.T) # 余弦距离 = 1 - 余弦相似度
+        a = np.asarray(a, dtype=np.float64)
+        b = np.asarray(b, dtype=np.float64)
+        na = np.linalg.norm(a, axis=1, keepdims=True)
+        nb = np.linalg.norm(b, axis=1, keepdims=True)
+        na = np.maximum(na, 1e-12)
+        nb = np.maximum(nb, 1e-12)
+        a = a / na
+        b = b / nb
+    return 1. - np.dot(a, b.T)
 
 
 def _nn_euclidean_distance(x, y):

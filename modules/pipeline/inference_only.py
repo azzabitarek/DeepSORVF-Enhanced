@@ -74,7 +74,8 @@ class InferenceRunner:
             max_age=cfg.DEEPSORT.MAX_AGE,
             n_init=cfg.DEEPSORT.N_INIT,
             nn_budget=cfg.DEEPSORT.NN_BUDGET,
-            use_cuda=(self.device != "cpu")
+            use_cuda=(self.device != "cpu"),
+            use_reid=False
         )
 
         self._initialized = True

@@ -134,7 +134,7 @@ class BatchRunner:
 
     def _process_batch(self, cap, frame_indices, initial_time, fps, im_shape,
                        camera_para, ais_path, result_metric, project_root):
-        """Process a single batch of frames."""
+        """Process a single batch of frames sequentially (no cap.set)."""
         import sys
         sys.path.insert(0, str(project_root))
         from utils.file_read import update_time
@@ -142,11 +142,31 @@ class BatchRunner:
         from utils.AIS_utils import AISPRO
         from utils.FUS_utils import FUSPRO
         from utils.gen_result import gen_result
+        import torch
+        from deep_sort.utils.parser import get_config
+        from deep_sort.deep_sort import DeepSort
+        import utils.VIS_utils as vis_module
 
         t = int(1000 / fps)
         AIS = AISPRO(ais_path, [], im_shape, t)
         VIS = VISPRO(1, 0, t)
         FUS = FUSPRO(min(im_shape) // 2, im_shape, t)
+
+        # Reinitialize global deepsort to avoid state accumulation across batches
+        cfg = get_config()
+        cfg.merge_from_file(str(project_root / "deep_sort/configs/deep_sort.yaml"))
+        vis_module.deepsort = DeepSort(
+            str(project_root / cfg.DEEPSORT.REID_CKPT),
+            max_dist=cfg.DEEPSORT.MAX_DIST,
+            min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
+            nms_max_overlap=cfg.DEEPSORT.NMS_MAX_OVERLAP,
+            max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
+            max_age=cfg.DEEPSORT.MAX_AGE,
+            n_init=cfg.DEEPSORT.N_INIT,
+            nn_budget=cfg.DEEPSORT.NN_BUDGET,
+            use_cuda=torch.cuda.is_available(),
+            use_reid=False
+        )
 
         batch_stats = {
             "frame_indices": frame_indices,
@@ -155,15 +175,15 @@ class BatchRunner:
             "detections": [],
         }
 
-        for frame_idx in frame_indices:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        output_idx = 0
+
+        for expected_idx in frame_indices:
             ret, im = cap.read()
             if not ret:
                 continue
 
             Time = initial_time.copy()
-            # Advance time to correct position
-            for _ in range(frame_idx):
+            for _ in range(expected_idx):
                 Time, _, _ = update_time(Time, t)
 
             start = time.time()
@@ -178,6 +198,10 @@ class BatchRunner:
             batch_stats["total_ms"] += elapsed_ms
             batch_stats["detections"].append(len(Vis_cur))
             batch_stats["frame_count"] += 1
+
+            if timestamp % 1000 < t:
+                gen_result(output_idx, Vis_cur, Fus_tra, result_metric, im_shape)
+                output_idx += 1
 
         batch_stats["avg_ms_per_frame"] = round(
             batch_stats["total_ms"] / max(batch_stats["frame_count"], 1), 2
