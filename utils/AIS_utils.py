@@ -3,6 +3,22 @@ from geopy.distance import geodesic
 import pyproj
 from math import radians, cos, sin, asin, sqrt, tan, atan2, degrees
 import math
+from datetime import datetime
+
+def _ensure_epoch_ms(ts):
+    """Convert timestamp to epoch milliseconds (int).
+    Handles both numeric epoch and datetime string formats."""
+    if isinstance(ts, (int, float)):
+        return int(ts)
+    s = str(ts).strip()
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+            return int(dt.timestamp() * 1000)
+        except ValueError:
+            return int(datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S").timestamp() * 1000)
 import numpy as np
 import cv2
 from IPython import embed
@@ -207,7 +223,7 @@ def data_pre(ais, timestamp):
         geo_d = pyproj.Geod(ellps="WGS84")
 
         # Compute distance travelled since the last fix
-        distance = ais['speed'] * ((timestamp - int(ais['timestamp'])) / 3600) * 1852
+        distance = ais['speed'] * ((timestamp - _ensure_epoch_ms(ais['timestamp'])) / 3600) * 1852
         ais['timestamp'] = timestamp
 
         # Compute new lon/lat using the vessel's course and distance
@@ -218,7 +234,7 @@ def data_pre(ais, timestamp):
 def data_pred(AIS_cur, AIS_read, AIS_las, timestamp):
 
     for index, ais in AIS_read.iterrows():
-        ais['timestamp'] = round(int(ais['timestamp']) / 1000)
+        ais['timestamp'] = round(_ensure_epoch_ms(ais['timestamp']) / 1000)
         # 1. Record exists at the current timestamp — use as-is
         if ais['timestamp'] == int(timestamp // 1000):
             AIS_cur = pd.concat([AIS_cur, ais.to_frame().T], ignore_index=True)
