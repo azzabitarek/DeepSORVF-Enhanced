@@ -147,7 +147,7 @@ def data_filter(ais, camera_para):
                else 360 - abs(shoot_hdir - angle)
 
     # First check vertical visibility; if within vertical FOV, check horizontal FOV
-    if 90 + shoot_vdir - FOV_ver / 2 < math.degrees(math.atan(D_abs / height_cam)):
+    if height_cam == 0 or 90 + shoot_vdir - FOV_ver / 2 < math.degrees(math.atan(D_abs / max(1, height_cam))):
         # ─────────────────────────────────────────────────────────────────────
         # Coordinate transform & visual trajectory filter zone
         # ─────────────────────────────────────────────────────────────────────
