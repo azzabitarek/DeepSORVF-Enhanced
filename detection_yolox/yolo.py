@@ -15,14 +15,16 @@ from .utils.utils_bbox import decode_outputs, non_max_suppression
 训练自己的数据集必看注释！
 '''
 class YOLO(object):
+    # Resolve all paths relative to this file's parent (detection_yolox/)
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     _defaults = {
         #--------------------------------------------------------------------------#
         #   使用自己训练好的模型进行预测一定要修改model_path和classes_path！
         #   model_path指向logs文件夹下的权值文件，classes_path指向model_data下的txt
         #   如果出现shape不匹配，同时要注意训练时的model_path和classes_path参数的修改
         #--------------------------------------------------------------------------#
-        "model_path" : 'weights/YOLOX-final.pth',
-        "classes_path"      : 'detection_yolox/model_data/ship_classes.txt',
+        "model_path" : os.path.join(_BASE_DIR, '..', 'weights', 'YOLOX-final.pth'),
+        "classes_path"      : os.path.join(_BASE_DIR, 'model_data', 'ship_classes.txt'),
         #---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
         #---------------------------------------------------------------------#
