@@ -53,7 +53,7 @@ deepsort = DeepSort(cfg.DEEPSORT.REID_CKPT,
                     max_dist=cfg.DEEPSORT.MAX_DIST, min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
                     nms_max_overlap=cfg.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
                     max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT, nn_budget=cfg.DEEPSORT.NN_BUDGET,
-                    use_cuda=True)
+                    use_cuda=torch.cuda.is_available())
 
 def _ensemble_nms(boxes_ship, boxes_maritime, iou_thresh=0.5):
     """
@@ -534,9 +534,9 @@ class VISPRO(object):
                 if track_id in id_list:
                     x1, y1, x2, y2, _, _ = bboxes_anti_occ[id_list.index(track_id)] # 要把没有历史纪录的id从id——list中删掉
                 # 存储至pd中[ID,x1,y1,x2,y2,trackx,tracky,time]
-                self.Vis_tra_cur_3 = self.Vis_tra_cur_3.append({'ID':track_id,\
+                self.Vis_tra_cur_3 = pd.concat([self.Vis_tra_cur_3, pd.DataFrame([{'ID':track_id,\
                     'x1':int(x1),'y1':int(y1),'x2':int(x2),'y2':int(y2),'x':int((x1 + x2) / 2),\
-                        'y':int((y1 + y2) / 2), 'timestamp':timestamp//1000}, ignore_index=True)
+                        'y':int((y1 + y2) / 2), 'timestamp':timestamp//1000}])], ignore_index=True)
 
     def update_tra(self, Vis_tra, timestamp):
         # 用于轨迹更新
@@ -547,11 +547,11 @@ class VISPRO(object):
             # 求取均值
             df = id_current.mean().astype(int)
             df['timestamp'] = timestamp // 1000
-            self.Vis_tra_cur = self.Vis_tra_cur.append(df, ignore_index=True)
+            self.Vis_tra_cur = pd.concat([self.Vis_tra_cur, df.to_frame().T], ignore_index=True)
         self.Vis_tra_cur_3 = pd.DataFrame(columns=['ID','x1','y1','x2','y2','x','y','timestamp'])
 
         Vis_tra_cur_withfeature = motion_features_extraction(self.last5_vis_tra_list, VIS_tra_cur= self.Vis_tra_cur)
-        self.Vis_tra = self.Vis_tra.append(Vis_tra_cur_withfeature)
+        self.Vis_tra = pd.concat([self.Vis_tra, Vis_tra_cur_withfeature])
         if len(self.last5_vis_tra_list) > 4:
             self.last5_vis_tra_list.pop(0)
         self.last5_vis_tra_list.append(Vis_tra_cur_withfeature)
@@ -802,6 +802,6 @@ class VISPRO(object):
                 self.Anti_occlusion_traj = pd.DataFrame(columns=['ID', 'x1', 'y1', 'x2', 'y2', 'x', 'y', 'speed', 'timestamp'])
                 id_list = list(self.VIS_tra_last['ID'].unique())
                 for i in self.OAR_ids_list:
-                    self.Anti_occlusion_traj = self.Anti_occlusion_traj.append(self.VIS_tra_last.iloc[id_list.index(i)])
+                    self.Anti_occlusion_traj = pd.concat([self.Anti_occlusion_traj, self.VIS_tra_last.iloc[id_list.index(i)].to_frame().T])
         
         return self.Vis_tra, self.Vis_tra_cur

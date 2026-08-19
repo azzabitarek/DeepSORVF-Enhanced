@@ -185,7 +185,7 @@ def transform(AIS_current, AIS_vis, camera_para, shape):
         if flag == 'transform':
             x, y = visual_transform(ais['lon'], ais['lat'], camera_para, shape)
             ais['x'], ais['y'] = x, y
-            AIS_visCurrent = AIS_visCurrent.append(ais, ignore_index=True)
+            AIS_visCurrent = pd.concat([AIS_visCurrent, ais.to_frame().T], ignore_index=True)
         # Case 2: remove record from visual trajectory history
         elif flag == 'visTraj_del' or flag == 'ais_del':
             AIS_vis = AIS_vis.drop(AIS_vis[AIS_vis['mmsi'] == ais['mmsi']].index)
@@ -221,14 +221,14 @@ def data_pred(AIS_cur, AIS_read, AIS_las, timestamp):
         ais['timestamp'] = round(ais['timestamp'] / 1000)
         # 1. Record exists at the current timestamp — use as-is
         if ais['timestamp'] == int(timestamp // 1000):
-            AIS_cur = AIS_cur.append(ais, ignore_index=True)
+            AIS_cur = pd.concat([AIS_cur, ais.to_frame().T], ignore_index=True)
         # 2. Record is from a previous timestamp — dead-reckon it forward
         else:
-            AIS_cur = AIS_cur.append(data_pre(ais, timestamp // 1000), ignore_index=True)
+            AIS_cur = pd.concat([AIS_cur, data_pre(ais, timestamp // 1000).to_frame().T], ignore_index=True)
 
     for index, ais in AIS_las.iterrows():
         if ais['mmsi'] not in AIS_cur['mmsi'].values:
-            AIS_cur = AIS_cur.append(data_pre(ais, timestamp // 1000), ignore_index=True)
+            AIS_cur = pd.concat([AIS_cur, data_pre(ais, timestamp // 1000).to_frame().T], ignore_index=True)
     return AIS_cur
 
 def data_coarse_process(AIS_current, AIS_last, camera_para, max_dis):
@@ -332,7 +332,7 @@ class AISPRO(object):
                 pass
 
         # 3. Append projected records to the running AIS history
-        AIS_vis = AIS_vis.append(AIS_vis_cur, ignore_index=True)
+        AIS_vis = pd.concat([AIS_vis, AIS_vis_cur], ignore_index=True)
 
         # 4. Drop records older than time_lim minutes from the history
         AIS_vis = AIS_vis.drop(AIS_vis[AIS_vis['timestamp'] < (

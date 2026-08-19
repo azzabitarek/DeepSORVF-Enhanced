@@ -48,7 +48,7 @@ class YOLO(object):
         #   是否使用Cuda
         #   没有GPU可以设置成False
         #-------------------------------#
-        "cuda"              : True,
+        "cuda"              : torch.cuda.is_available(),
     }
 
     @classmethod
@@ -152,7 +152,10 @@ class YOLO(object):
             y2  = min(image.size[1], np.floor(bottom).astype('int32'))
             x2   = min(image.size[0], np.floor(right).astype('int32'))
             
-            out.append((x1,y1,x2,y2,predicted_class,torch.from_numpy(np.array(score)).cuda()))
+            _score_tensor = torch.from_numpy(np.array(score))
+            if self.cuda:
+                _score_tensor = _score_tensor.cuda()
+            out.append((x1,y1,x2,y2,predicted_class,_score_tensor))
 
 
         return out

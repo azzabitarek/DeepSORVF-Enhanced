@@ -131,7 +131,7 @@ class InferenceRunner:
         FUS = FUSPRO(max_dis, im_shape, t)
 
         Time = initial_time.copy()
-        _, timestamp0, _ = time2stamp(initial_time)
+        timestamp0, _ = time2stamp(initial_time)
         times = 0
         time_i = 0
         sum_t = []

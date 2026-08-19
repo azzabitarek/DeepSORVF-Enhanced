@@ -74,12 +74,12 @@ def process_img(df_draw, x1, y1, x2, y2, fusion_current, w, h, w0, h0, Type, ais
         lat = -1
         lon = -1
 
-    df_draw = df_draw.append({'ais': ais, 'mmsi': mmsi, 'sog': sog, 'cog': cog,
+    df_draw = pd.concat([df_draw, pd.DataFrame([{'ais': ais, 'mmsi': mmsi, 'sog': sog, 'cog': cog,
                                'lat': lat, 'lon': lon,
                                'box_x1': x1, 'box_y1': y1, 'box_x2': x2, 'box_y2': y2,
                                'inf_x1': inf_x1, 'inf_y1': inf_y1,
                                'inf_x2': inf_x2, 'inf_y2': inf_y2,
-                               'color': color}, ignore_index=True)
+                               'color': color}])], ignore_index=True)
     return df_draw
 
 def draw(add_img, df_draw, tf, ais_enabled=True):
@@ -161,7 +161,7 @@ def filter_inf(df_draw, w, h, w0, h0, wn, hn, df):
             inf['inf_x1'] = index + df
             inf['inf_x2'] = inf['inf_x1'] + wn
             index = index + df + wn
-        df_new = df_new.append(inf)
+        df_new = pd.concat([df_new, inf.to_frame().T], ignore_index=True)
     return df_new
 
 class DRAW(object):

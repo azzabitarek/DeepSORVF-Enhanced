@@ -255,20 +255,20 @@ class FUSPRO(object):
                 match = 1
             conf = confidence_score(match)
 
-            mat_list = mat_list.append({'ID': ID, 'mmsi': MMSI, 'lon': lon, 'lat': lat,
-                                         'speed': speed, 'course': course, 'heading': heading,
-                                         'type': types, 'x1': x1, 'y1': y1,
-                                         'w': w, 'h': h, 'timestamp': time,
-                                         'confidence': conf}, ignore_index=True)
+            mat_list = pd.concat([mat_list, pd.DataFrame([{'ID': ID, 'mmsi': MMSI, 'lon': lon, 'lat': lat,
+                                          'speed': speed, 'course': course, 'heading': heading,
+                                          'type': types, 'x1': x1, 'y1': y1,
+                                          'w': w, 'h': h, 'timestamp': time,
+                                          'confidence': conf}])], ignore_index=True)
 
             # Case 1: Pair existed in the previous frame — increment match counter
             if ID_MMSI in mat_las['ID/mmsi'].values:
-                mat_cur = mat_cur.append({'ID/mmsi': str(ID) + '/' + str(MMSI),
-                                           'timestamp': time, 'match': match}, ignore_index=True)
+                mat_cur = pd.concat([mat_cur, pd.DataFrame([{'ID/mmsi': str(ID) + '/' + str(MMSI),
+                                           'timestamp': time, 'match': match}])], ignore_index=True)
             # Case 2: New pair this frame — initialise match counter to 1
             else:
-                mat_cur = mat_cur.append({'ID/mmsi': str(ID) + '/' + str(MMSI),
-                                           'timestamp': time, 'match': 1}, ignore_index=True)
+                mat_cur = pd.concat([mat_cur, pd.DataFrame([{'ID/mmsi': str(ID) + '/' + str(MMSI),
+                                           'timestamp': time, 'match': 1}])], ignore_index=True)
 
         # Case 3: Pair was locked in a previous frame but absent this frame —
         #         carry forward if the MMSI is still in the scene and within the forgetting window
@@ -278,15 +278,15 @@ class FUSPRO(object):
             time     = inf['timestamp']
             if MMSI in AIS_MMSIlist and ID_MMSI not in mat_cur['ID/mmsi'].values \
                     and timestamp // 1000 - time < self.fog_num:
-                mat_cur = mat_cur.append(inf, ignore_index=True)
+                mat_cur = pd.concat([mat_cur, inf.to_frame().T], ignore_index=True)
 
         # 2. Promote matches that have exceeded the binding threshold to locked pairs
         for ind, inf in mat_cur.iterrows():
             ID, MMSI = [int(x) for x in inf['ID/mmsi'].split('/')]
             if inf['match'] > self.bin_num:
-                bin_cur = bin_cur.append({'ID': ID, 'mmsi': MMSI,
+                bin_cur = pd.concat([bin_cur, pd.DataFrame([{'ID': ID, 'mmsi': MMSI,
                                            'timestamp': int(inf['timestamp']),
-                                           'match': int(inf['match'])}, ignore_index=True)
+                                           'match': int(inf['match'])}])], ignore_index=True)
 
         return mat_list, mat_cur, bin_cur
 
