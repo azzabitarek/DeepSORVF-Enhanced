@@ -89,16 +89,17 @@ def ensure_dirs(*dirs):
 
 def get_clip_path(clip_name):
     """Resolve a clip directory path by name."""
+    clips_dir = PROJECT_ROOT / 'data' / 'clips'
     clips = {
-        "clip-01": PROJECT_ROOT / "clip-01",
-        "Video-29": PROJECT_ROOT / "Video-29",
-        "Video-34": PROJECT_ROOT / "Video-34",
-        "Video-28": PROJECT_ROOT / "Video-28",
-        "Video-10": PROJECT_ROOT / "Video-10",
-        "clip-02": PROJECT_ROOT / "clip-02",
-        "clip-10": PROJECT_ROOT / "clip-10",
+        "clip-01": clips_dir / "clip-01",
+        "Video-29": clips_dir / "Video-29",
+        "Video-34": clips_dir / "Video-34",
+        "Video-28": clips_dir / "Video-28",
+        "Video-10": clips_dir / "Video-10",
+        "clip-02": clips_dir / "clip-02",
+        "clip-10": clips_dir / "clip-10",
     }
-    return clips.get(clip_name, PROJECT_ROOT / clip_name)
+    return clips.get(clip_name, clips_dir / clip_name)
 
 
 def list_clips():

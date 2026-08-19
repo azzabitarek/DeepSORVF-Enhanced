@@ -85,7 +85,7 @@ def main():
 
     # Validate sequences exist
     for seq in sequences_to_run:
-        seq_path = PROJECT_ROOT / seq
+        seq_path = PROJECT_ROOT / 'data' / 'clips' / seq
         if not seq_path.exists():
             print(f"[WARNING] Sequence '{seq}' not found at {seq_path}, skipping")
             sequences_to_run.remove(seq)
@@ -115,7 +115,7 @@ def main():
         for config_name in configs_to_run:
             # Check if already done
             if args.skip_existing:
-                seq_dir = PROJECT_ROOT / seq
+                seq_dir = PROJECT_ROOT / 'data' / 'clips' / seq
                 video_files = list(seq_dir.glob('*.mp4')) + list(seq_dir.glob('*.avi'))
                 if not video_files:
                     continue

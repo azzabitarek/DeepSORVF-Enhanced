@@ -72,7 +72,7 @@ def run_pipeline(clip_name, result_dir,
     result_dir.mkdir(parents=True, exist_ok=True)
 
     # Read clip data
-    clip_path = str(PROJECT_ROOT / clip_name) + "/"
+    clip_path = str(PROJECT_ROOT / 'data' / 'clips' / clip_name) + "/"
     video_path, ais_path, result_video, result_metric, initial_time, camera_para = \
         read_all(clip_path, str(result_dir) + "/")
 

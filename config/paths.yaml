@@ -10,13 +10,13 @@ drive_root: "/content/drive/MyDrive/DeepSORVF_Project"
 # ── Raw data ──────────────────────────────────────────────────────────
 data:
   clips:
-    clip_01: "./clip-01/"
-    Video_29: "./Video-29/"
-    Video_34: "./Video-34/"
-    Video_28: "./Video-28/"
-    Video_10: "./Video-10/"
-    clip_02: "./clip-02/"
-    clip_10: "./clip-10/"
+    clip_01: "./data/clips/clip-01/"
+    Video_29: "./data/clips/Video-29/"
+    Video_34: "./data/clips/Video-34/"
+    Video_28: "./data/clips/Video-28/"
+    Video_10: "./data/clips/Video-10/"
+    clip_02: "./data/clips/clip-02/"
+    clip_10: "./data/clips/clip-10/"
 
 # ── Cache (intermediate outputs between sessions) ────────────────────
 cache:
