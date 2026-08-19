@@ -348,8 +348,8 @@ def speed_extract(last_traj, now_traj):
     last_y = int(last_traj.loc['y'])
     cur_x = int(now_traj.loc['x'])
     cur_y = int(now_traj.loc['y'])
-    x_speed = (cur_x - last_x) / (int(now_traj.loc['timestamp']) - int(last_traj.loc['timestamp']))
-    y_speed = (cur_y - last_y) / (int(now_traj.loc['timestamp']) - int(last_traj.loc['timestamp']))
+    x_speed = (cur_x - last_x) / max(1, int(now_traj.loc['timestamp']) - int(last_traj.loc['timestamp']))
+    y_speed = (cur_y - last_y) / max(1, int(now_traj.loc['timestamp']) - int(last_traj.loc['timestamp']))
     return [x_speed, y_speed]
 
 def whether_in_area(point, bbox):
@@ -382,7 +382,7 @@ def overlap(box1, box2, val):
         Cross_area = (min_x2 - max_x1) * (min_y2 - max_y1)
         box1_area = (maxx1 - minx1) * (maxy1 - miny1)
         box2_area = (maxx2 - minx2) * (maxy2 - miny2)
-        if Cross_area / box1_area > val or Cross_area / box2_area > val:
+        if box1_area > 0 and box2_area > 0 and (Cross_area / box1_area > val or Cross_area / box2_area > val):
             return 1
         else:
             return 0
