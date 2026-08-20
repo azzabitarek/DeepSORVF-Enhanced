@@ -40,7 +40,6 @@ Thumbs.db
 desktop.ini
 
 # ── Large files (models, videos, data) ─────────────────────────────
-# Model weights — track with DVC or Git LFS, not raw git
 *.pth
 *.pt
 *.onnx
@@ -48,10 +47,8 @@ desktop.ini
 *.trt
 best.pt
 
-# BUT: track weights/ directory explicitly
-!weights/*.pt
-!weights/*.pth
-!weights/*.t7
+# Weights — excluded from repo (too large, download separately)
+weights/
 
 # Video files
 *.avi
