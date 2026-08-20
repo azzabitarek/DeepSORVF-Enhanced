@@ -42,6 +42,8 @@ INCLUDE_FILES = [
     "ablation_runner.py",
     "aggregate_ablation.py",
     "setup_colab.ipynb",
+    "phase1_ablation.ipynb",
+    "phase2_ablation.ipynb",
     "requirements_colab.txt",
 ]
 
