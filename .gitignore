@@ -85,6 +85,7 @@ data/results/**/*_radar.mp4
 result/video/*.csv
 result/video/*.txt
 ablation_results/
+data/results/
 
 # ── Bad filenames ───────────────────────────────────────────────────
 utils/import pandas as pd.py
@@ -93,6 +94,14 @@ utils/import pandas as pd.py
 *.tmp
 *.bak
 *.orig
+test_*.py
+check_results.py
+
+# ── Zip packages ────────────────────────────────────────────────────
+*.zip
+
+# ── Old backup ──────────────────────────────────────────────────────
+DeepSORVF_abalation/
 
 # ── Google Colab ────────────────────────────────────────────────────
 content/
