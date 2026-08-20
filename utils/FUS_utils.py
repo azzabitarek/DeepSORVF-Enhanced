@@ -338,7 +338,7 @@ class FUSPRO(object):
                 prev_bin_ids = set(bin_las['ID/mmsi'].values) if len(bin_las) > 0 else set()
                 cur_bin_ids = set()
                 for _, binf in bin_cur.iterrows():
-                    cur_bin_ids.add(binf['ID/mmsi'])
+                    cur_bin_ids.add(f"{int(binf['ID'])}/{int(binf['mmsi'])}")
                 new_locks = cur_bin_ids - prev_bin_ids
                 for _, inf in mat_cur.iterrows():
                     ID_mmsi = inf['ID/mmsi']
