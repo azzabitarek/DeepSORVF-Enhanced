@@ -334,6 +334,12 @@ class FUSPRO(object):
                 writer = csv.writer(f)
                 if write_header:
                     writer.writerow(['timestamp', 'ID', 'mmsi', 'match_count', 'is_new_lock'])
+                # Track which pairs are newly entering bin_cur this second
+                prev_bin_ids = set(bin_las['ID/mmsi'].values) if len(bin_las) > 0 else set()
+                cur_bin_ids = set()
+                for _, binf in bin_cur.iterrows():
+                    cur_bin_ids.add(binf['ID/mmsi'])
+                new_locks = cur_bin_ids - prev_bin_ids
                 for _, inf in mat_cur.iterrows():
                     ID_mmsi = inf['ID/mmsi']
                     ID_val, mmsi_val = [int(x) for x in ID_mmsi.split('/')]
@@ -342,7 +348,7 @@ class FUSPRO(object):
                         ID_val,
                         mmsi_val,
                         int(inf['match']),
-                        bool(inf['match'] == self.bin_num + 1)
+                        ID_mmsi in new_locks
                     ])
 
         return mat_list, mat_cur, bin_cur
