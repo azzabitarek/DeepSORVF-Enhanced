@@ -44,6 +44,7 @@ INCLUDE_FILES = [
     "setup_colab.ipynb",
     "phase1_ablation.ipynb",
     "phase2_ablation.ipynb",
+    "phase3_ablation.ipynb",
     "requirements_colab.txt",
 ]
 
