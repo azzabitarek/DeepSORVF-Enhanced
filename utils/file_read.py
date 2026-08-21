@@ -51,9 +51,9 @@ def read_all(path, result_path):
         initial_time = [2024, 1, 1, 0, 0, 0, 0]
     
     with open(glob.glob(path+'/*.txt')[0], "r") as f:
-        camera_para = f.readlines()[0][1:-2]
-        camera_para = camera_para.split(',')
-        camera_para = list(map(float,camera_para))
+        raw = f.readlines()[0].strip()
+        raw = raw.strip('[]')
+        camera_para = [float(x.strip()) for x in raw.split(',') if x.strip()]
     
     return video_path, ais_path, result_video, result_metric, initial_time, camera_para
 
